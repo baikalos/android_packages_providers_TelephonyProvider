@@ -17,6 +17,7 @@
 package com.android.providers.telephony;
 
 import android.annotation.NonNull;
+import android.app.ActivityManager;
 import android.app.AppOpsManager;
 import android.content.ContentProvider;
 import android.content.ContentResolver;
@@ -120,6 +121,7 @@ public class SmsProvider extends ContentProvider {
             String[] selectionArgs, String sort) {
         Cursor emptyCursor = new MatrixCursor((projectionIn == null) ?
                 (new String[] {}) : projectionIn);
+
         UserManager userManager = (UserManager) getContext().getSystemService(Context.USER_SERVICE);
         if ((userManager != null) && (userManager.isManagedProfile(
                 Binder.getCallingUserHandle().getIdentifier()))) {
@@ -140,6 +142,13 @@ public class SmsProvider extends ContentProvider {
         // If access is restricted, we don't allow subqueries in the query.
         if (accessRestricted) {
             try {
+                ActivityManager activityManager = (ActivityManager) getContext().getSystemService(ActivityManager.class);
+                if( activityManager != null ) {
+                    if( activityManager.getBaikalPackageOption(getCallingPackage(),Binder.getCallingUid(),8,0) != 0 ) {
+                        Log.w(TAG, "SMS Query rejected: " + getCallingPackage() + "/" + Binder.getCallingUid());
+                        return emptyCursor;
+                    }
+                }
                 SqlQueryChecker.checkQueryParametersForSubqueries(projectionIn, selection, sort);
             } catch (IllegalArgumentException e) {
                 Log.w(TAG, "Query rejected: " + e.getMessage());
