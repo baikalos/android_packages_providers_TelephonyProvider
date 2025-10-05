@@ -145,7 +145,7 @@ public class SmsProvider extends ContentProvider {
                 ActivityManager activityManager = (ActivityManager) getContext().getSystemService(ActivityManager.class);
                 if( activityManager != null ) {
                     if( activityManager.getBaikalPackageOption(getCallingPackage(),Binder.getCallingUid(),8,0) != 0 ) {
-                        Log.w(TAG, "SMS Query rejected: " + getCallingPackage() + "/" + Binder.getCallingUid());
+                        Log.w(TAG, "Baikal blocked SMS database access from : " + getCallingPackage() + "/" + Binder.getCallingUid());
                         return emptyCursor;
                     }
                 }
