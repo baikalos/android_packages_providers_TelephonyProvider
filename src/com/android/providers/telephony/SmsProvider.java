@@ -20,6 +20,7 @@ import android.Manifest;
 import android.annotation.NonNull;
 import android.annotation.RequiresPermission;
 import android.app.AppOpsManager;
+import android.baikalos.BaikalAppProfile;
 import android.content.BroadcastReceiver;
 import android.content.ContentProvider;
 import android.content.ContentResolver;
@@ -293,9 +294,17 @@ public class SmsProvider extends ContentProvider {
             qb.setStrictGrammar(true);
         }
 
+        Cursor emptyCursor = new MatrixCursor((projectionIn == null) ?
+                (new String[] {}) : projectionIn);
+
         // If access is restricted, we don't allow subqueries in the query.
         if (accessRestricted) {
             try {
+                if( getContext().getBaikalContext().getBaikalPackageOption(getCallingPackage(),
+                        Binder.getCallingUid(),BaikalAppProfile.BAIKAL_OPCODE_BLOCK_SMS,0) != 0 ) {
+                    Log.w(TAG, "Baikal blocked SMS database access from : " + getCallingPackage() + "/" + Binder.getCallingUid());
+                    return emptyCursor;
+                }
                 SqlQueryChecker.checkQueryParametersForSubqueries(projectionIn, selection, sort);
             } catch (IllegalArgumentException e) {
                 Log.w(TAG, "Query rejected: " + e.getMessage());
@@ -317,9 +326,6 @@ public class SmsProvider extends ContentProvider {
             Log.w(TAG, "Query rejected: " + e.getMessage());
             return null;
         }
-
-        Cursor emptyCursor = new MatrixCursor((projectionIn == null) ?
-                (new String[] {}) : projectionIn);
 
         // Generate the body of the query.
         int match = sURLMatcher.match(url);
